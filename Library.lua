@@ -15,7 +15,7 @@ local ScreenGui = Instance.new('ScreenGui');
 ProtectGui(ScreenGui);
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
-ScreenGui.Parent = CoreGui;
+ScreenGui.Parent = (gethui and gethui()) or (get_hidden_gui and get_hidden_gui()) or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui");
 
 local Toggles = {};
 local Options = {};
@@ -45,6 +45,23 @@ local Library = {
     Signals = {};
     ScreenGui = ScreenGui;
 };
+
+function Library:SetFont(newFont)
+    if typeof(newFont) == 'string' then
+        newFont = Enum.Font[newFont] or Library.Font
+    end
+    if typeof(newFont) ~= 'EnumItem' then return end
+    Library.Font = newFont
+    if Library.ScreenGui then
+        for _, inst in ipairs(Library.ScreenGui:GetDescendants()) do
+            if inst:IsA("TextLabel") or inst:IsA("TextBox") or inst:IsA("TextButton") then
+                pcall(function()
+                    inst.Font = newFont
+                end)
+            end
+        end
+    end
+end;
 
 local RainbowStep = 0
 local Hue = 0
@@ -2728,7 +2745,7 @@ function Library:CreateWindow(...)
         Position = UDim2.new(1, -215, 0, 10),
         Size = UDim2.new(0, 200, 0, 20),
         Text = Config.Title,
-        Font = Enum.Font.Gotham,
+        Font = Library.Font,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Right,
         TextColor3 = Color3.fromRGB(35, 35, 35), -- Р¦Р’Р•Рў РўР•РџР•Р Р¬ РўР•РњРќРћ-РЎР•Р Р«Р™ (РїРѕС‡С‚Рё СЃР»РёРІР°РµС‚СЃСЏ СЃ С„РѕРЅРѕРј)
@@ -2751,10 +2768,13 @@ if Library.RegistryMap[WindowLabel] then
         Parent = Outer;
     });
 
-    local TabArea = Library:Create('Frame', {
+    local TabArea = Library:Create('ScrollingFrame', {
         BackgroundTransparency = 1;
+        BorderSizePixel = 0;
         Position = UDim2.new(0, 15, 0, 30);
         Size = UDim2.new(1, -30, 1, -40);
+        CanvasSize = UDim2.new(0, 0, 0, 0);
+        ScrollBarThickness = 0;
         ZIndex = 3;
         Parent = LeftPanel;
     });
@@ -2765,6 +2785,10 @@ if Library.RegistryMap[WindowLabel] then
         SortOrder = Enum.SortOrder.LayoutOrder;
         Parent = TabArea;
     });
+
+    TabListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+        TabArea.CanvasSize = UDim2.fromOffset(0, TabListLayout.AbsoluteContentSize.Y + 10);
+    end);
 
 local TabContainer = Library:Create('Frame', {
         AnchorPoint = Vector2.new(0, 0),
@@ -2841,7 +2865,7 @@ local TabHighlight = Library:Create('Frame', {
             Position = UDim2.new(0, TextOffset, 0, 0),
             Size = UDim2.new(1, -TextOffset, 1, 0),
             Text = Name,
-            Font = Enum.Font.Gotham,
+            Font = Library.Font,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextColor3 = Color3.fromRGB(130, 130, 130),
@@ -2963,7 +2987,7 @@ function Tab:ShowTab()
                 Position = UDim2.new(0, 12, 0, 8),
                 TextSize = 13,
                 Text = Info.Name,
-                Font = Enum.Font.Gotham,
+                Font = Library.Font,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextColor3 = Color3.fromRGB(150, 150, 150),
                 ZIndex = 5,
@@ -3049,7 +3073,7 @@ function Tab:AddTabbox(Info)
                 local ButtonLabel = Library:CreateLabel({
                     Size = UDim2.new(1, 0, 1, 0),
                     TextSize = 13,
-                    Font = Enum.Font.GothamMedium,
+                    Font = Library.Font,
                     Text = Name,
                     TextXAlignment = Enum.TextXAlignment.Center,
                     TextColor3 = Library.FontColor,
@@ -3184,20 +3208,20 @@ function Tab:AddTabbox(Info)
         local FadeTime = Config.MenuFadeTime;
         Fading = true;
         Toggled = (not Toggled);
-        ModalElement.Modal = Toggled;
+        ModalElement.Modal = false --[[mouse fix]];
 
         if Toggled then
             Outer.Visible = true;
-            task.spawn(function()
+            task.spawn(function() do return end;
                 local State = InputService.MouseIconEnabled;
                 local Cursor = Drawing.new('Triangle');
-                Cursor.Thickness = 1; Cursor.Filled = true; Cursor.Visible = true;
+                Cursor.Thickness = 1; Cursor.Filled = true; Cursor.Visible = false --[[mouse fix]];
                 local CursorOutline = Drawing.new('Triangle');
                 CursorOutline.Thickness = 1; CursorOutline.Filled = false;
-                CursorOutline.Color = Color3.new(0, 0, 0); CursorOutline.Visible = true;
+                CursorOutline.Color = Color3.new(0, 0, 0); CursorOutline.Visible = false --[[mouse fix]];
 
                 while Toggled and ScreenGui.Parent do
-                    InputService.MouseIconEnabled = false;
+                    InputService.MouseIconEnabled = true --[[mouse fix]];
                     local mPos = InputService:GetMouseLocation();
                     Cursor.Color = Library.AccentColor;
                     Cursor.PointA = Vector2.new(mPos.X, mPos.Y);
@@ -3208,7 +3232,7 @@ function Tab:AddTabbox(Info)
                     CursorOutline.PointC = Cursor.PointC;
                     RenderStepped:Wait();
                 end;
-                InputService.MouseIconEnabled = State;
+                InputService.MouseIconEnabled = true --[[mouse fix]];
                 Cursor:Remove(); CursorOutline:Remove();
             end);
         end;
