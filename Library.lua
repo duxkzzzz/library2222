@@ -1148,7 +1148,7 @@ function Funcs:AddKeyPicker(Idx, Info)
 
             local State = KeyPicker:GetState();
 
-            ContainerLabel.Text = string.format('[%s] %s (%s)', KeyPicker.Value, Info.Text, KeyPicker.Mode);
+            ContainerLabel.Text = string.format('[%s] %s (%s)', KeyPicker.Value == 'None' and 'None' or KeyPicker.Value, Info.Text, KeyPicker.Mode);
             ContainerLabel.Visible = true;
             ContainerLabel.TextColor3 = State and Library.AccentColor or Library.FontColor;
 
@@ -1164,7 +1164,7 @@ function Funcs:AddKeyPicker(Idx, Info)
                 end;
             end;
 
-            Library.KeybindFrame.Size = UDim2.new(0, math.max(XSize + 10, 210), 0, YSize + 23)
+            Library.KeybindFrame.Size = UDim2.new(0, math.max(XSize + 24, 240), 0, YSize + 38)
         end;
 
         function KeyPicker:GetState()
@@ -1233,23 +1233,32 @@ function Funcs:AddKeyPicker(Idx, Info)
                     local Key;
 
                     if Input.UserInputType == Enum.UserInputType.Keyboard then
-                        Key = Input.KeyCode.Name;
+                        if Input.KeyCode == Enum.KeyCode.Escape
+                            or Input.KeyCode == Enum.KeyCode.Delete
+                            or Input.KeyCode == Enum.KeyCode.Backspace then
+                            Key = 'None';
+                        else
+                            Key = Input.KeyCode.Name;
+                        end
                     elseif Input.UserInputType == Enum.UserInputType.MouseButton1 then
                         Key = 'MB1';
                     elseif Input.UserInputType == Enum.UserInputType.MouseButton2 then
                         Key = 'MB2';
                     end;
 
+                    if not Key then return end;
+
                     Break = true;
                     Picking = false;
 
-                    DisplayLabel.Text = Key == 'None' and '=' or Key; -- РџСЂРёРјРµРЅСЏРµРј РјР°РіРёСЋ '='
+                    DisplayLabel.Text = Key == 'None' and '=' or Key;
                     KeyPicker.Value = Key;
 
-                    Library:SafeCallback(KeyPicker.ChangedCallback, Input.KeyCode or Input.UserInputType)
-                    Library:SafeCallback(KeyPicker.Changed, Input.KeyCode or Input.UserInputType)
+                    Library:SafeCallback(KeyPicker.ChangedCallback, Key == 'None' and Enum.KeyCode.Unknown or Input.KeyCode or Input.UserInputType)
+                    Library:SafeCallback(KeyPicker.Changed, Key == 'None' and Enum.KeyCode.Unknown or Input.KeyCode or Input.UserInputType)
 
                     Library:AttemptSave();
+                    KeyPicker:Update();
                     Event:Disconnect();
                 end);
             elseif Input.UserInputType == Enum.UserInputType.MouseButton2 and not Library:MouseIsOverOpenedFrame() then
@@ -1260,6 +1269,7 @@ function Funcs:AddKeyPicker(Idx, Info)
         Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
             if (not Picking) then
                 if KeyPicker.Mode == 'Toggle' then
+                    if KeyPicker.Value == 'None' then return end
                     local Key = KeyPicker.Value;
                     if Key == 'MB1' or Key == 'MB2' then
                         if Key == 'MB1' and Input.UserInputType == Enum.UserInputType.MouseButton1
@@ -2533,54 +2543,72 @@ do
 
     local KeybindOuter = Library:Create('Frame', {
         AnchorPoint = Vector2.new(0, 0.5);
-        BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 10, 0.5, 0);
-        Size = UDim2.new(0, 210, 0, 20);
+        BorderSizePixel = 0;
+        Position = UDim2.new(0, 14, 0.5, 0);
+        Size = UDim2.new(0, 240, 0, 20);
         Visible = false;
         ZIndex = 100;
         Parent = ScreenGui;
     });
 
+    Library:Create('UICorner', { CornerRadius = UDim.new(0, 6), Parent = KeybindOuter });
+
     local KeybindInner = Library:Create('Frame', {
         BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.OutlineColor;
-        BorderMode = Enum.BorderMode.Inset;
+        BorderSizePixel = 0;
         Size = UDim2.new(1, 0, 1, 0);
         ZIndex = 101;
         Parent = KeybindOuter;
     });
 
+    Library:Create('UICorner', { CornerRadius = UDim.new(0, 6), Parent = KeybindInner });
+
     Library:AddToRegistry(KeybindInner, {
         BackgroundColor3 = 'MainColor';
-        BorderColor3 = 'OutlineColor';
+    }, true);
+
+    local KeybindStroke = Library:Create('UIStroke', {
+        Color = Library.OutlineColor;
+        Thickness = 1;
+        Transparency = 0.35;
+        Parent = KeybindInner;
+    });
+
+    Library:AddToRegistry(KeybindStroke, {
+        Color = 'OutlineColor';
     }, true);
 
     local ColorFrame = Library:Create('Frame', {
         BackgroundColor3 = Library.AccentColor;
         BorderSizePixel = 0;
-        Size = UDim2.new(1, 0, 0, 2);
+        Size = UDim2.new(1, -12, 0, 2);
+        Position = UDim2.new(0, 6, 0, 6);
         ZIndex = 102;
         Parent = KeybindInner;
     });
+
+    Library:Create('UICorner', { CornerRadius = UDim.new(0, 2), Parent = ColorFrame });
 
     Library:AddToRegistry(ColorFrame, {
         BackgroundColor3 = 'AccentColor';
     }, true);
 
     local KeybindLabel = Library:CreateLabel({
-        Size = UDim2.new(1, 0, 0, 20);
-        Position = UDim2.fromOffset(5, 2),
+        Size = UDim2.new(1, -12, 0, 18);
+        Position = UDim2.fromOffset(8, 10),
         TextXAlignment = Enum.TextXAlignment.Left,
-
+        Font = Library.Font,
+        TextSize = 13,
         Text = 'Keybinds';
+        TextColor3 = Library.FontColor;
         ZIndex = 104;
         Parent = KeybindInner;
     });
 
     local KeybindContainer = Library:Create('Frame', {
         BackgroundTransparency = 1;
-        Size = UDim2.new(1, 0, 1, -20);
-        Position = UDim2.new(0, 0, 0, 20);
+        Size = UDim2.new(1, -12, 1, -30);
+        Position = UDim2.new(0, 6, 0, 28);
         ZIndex = 1;
         Parent = KeybindInner;
     });
@@ -2599,6 +2627,12 @@ do
     Library.KeybindFrame = KeybindOuter;
     Library.KeybindContainer = KeybindContainer;
     Library:MakeDraggable(KeybindOuter);
+end;
+
+function Library:SetKeybindFrameVisibility(Bool)
+    if Library.KeybindFrame then
+        Library.KeybindFrame.Visible = Bool;
+    end;
 end;
 
 function Library:SetWatermarkVisibility(Bool)
@@ -3270,7 +3304,9 @@ function Tab:AddTabbox(Info)
 
     Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
         if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
-            if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
+            if Library.ToggleKeybind.Value ~= 'None'
+                and Input.UserInputType == Enum.UserInputType.Keyboard
+                and Input.KeyCode.Name == Library.ToggleKeybind.Value then
                 task.spawn(Library.Toggle)
             end
         elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
