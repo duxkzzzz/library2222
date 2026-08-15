@@ -46,6 +46,18 @@ local Library = {
     ScreenGui = ScreenGui;
 };
 
+function Library.IsTyping()
+    if InputService:GetFocusedTextBox() then
+        return true
+    end
+    local ok, focused = pcall(function()
+        local tcs = game:GetService('TextChatService')
+        local cfg = tcs and tcs:FindFirstChildOfClass('ChatInputBarConfiguration')
+        return cfg and cfg.IsFocused == true
+    end)
+    return ok and focused == true
+end
+
 function Library:SetFont(newFont)
     if typeof(newFont) == 'string' then
         newFont = Enum.Font[newFont] or Library.Font
@@ -1267,6 +1279,7 @@ function Funcs:AddKeyPicker(Idx, Info)
         end);
 
         Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
+            if Library.IsTyping and Library.IsTyping() then return end
             if (not Picking) then
                 if KeyPicker.Mode == 'Toggle' then
                     if KeyPicker.Value == 'None' then return end
@@ -1779,13 +1792,13 @@ function Funcs:AddToggle(Idx, Info)
             Parent = ToggleLabel;
         });
 
-        -- 3. РљРІР°РґСЂР°С‚РёРє (Р’РЅРµС€РЅСЏСЏ РѕР±РІРѕРґРєР°), РїСЂРёР¶Р°С‚ Рє РџР РђР’РћРњРЈ РєСЂР°СЋ!
+        -- 3. РљРІР°РґСЂР°С‚РёРє (Р’РЅРµС€РЅСЏСЏ РѕР±РІРѕРґРєР°), РїСЂРёР¶Р°С‚ Рє РџР РђР’РћРњРЈ РєСЂР°СЋ!
         local ToggleOuter = Library:Create('Frame', {
             BackgroundColor3 = Library.OutlineColor;
             BorderSizePixel = 0;
             AnchorPoint = Vector2.new(1, 0.5); -- РЇРєРѕСЂСЊ РїРѕ С†РµРЅС‚СЂСѓ СЃРїСЂР°РІР°
             Position = UDim2.new(1, 0, 0.5, 0); -- РџСЂРёР¶РёРјР°РµРј РІ РїСЂР°РІС‹Р№ РєСЂР°Р№
-            Size = UDim2.new(0, 14, 0, 14); -- Р–Р•РЎРўРљРР™ Р РђР—РњР•Р  (РЅРµ Р±СѓРґРµС‚ СЂР°СЃС‚СЏРіРёРІР°С‚СЊСЃСЏ)
+            Size = UDim2.new(0, 14, 0, 14); -- Р–Р•РЎРўРљРР™ Р РђР—РњР•Р  (РЅРµ Р±СѓРґРµС‚ СЂР°СЃС‚СЏРіРёРІР°С‚СЊСЃСЏ)
             ZIndex = 5;
             Parent = ToggleContainer;
         });
@@ -1805,7 +1818,7 @@ function Funcs:AddToggle(Idx, Info)
             BorderSizePixel = 0;
             AnchorPoint = Vector2.new(0.5, 0.5);
             Position = UDim2.new(0.5, 0, 0.5, 0);
-            Size = UDim2.new(1, -2, 1, -2); -- Р РѕРІРЅРѕ РЅР° 1px РјРµРЅСЊС€Рµ СЂР°РјРєРё
+            Size = UDim2.new(1, -2, 1, -2); -- Р РѕРІРЅРѕ РЅР° 1px РјРµРЅСЊС€Рµ СЂР°РјРєРё
             ZIndex = 6;
             Parent = ToggleOuter;
         });
@@ -1981,7 +1994,7 @@ function Funcs:AddSlider(Idx, Info)
             BorderSizePixel = 0;
             AnchorPoint = Vector2.new(0.5, 0.5); -- Р¦РµРЅС‚СЂРёСЂСѓРµРј
             Position = UDim2.new(1, 0, 0.5, 0); -- РљСЂРµРїРёРј Рє РїСЂР°РІРѕРјСѓ РєСЂР°СЋ SliderInner
-            Size = UDim2.new(0, 10, 0, 10); -- Р Р°Р·РјРµСЂ РєСЂСѓР¶РєР°
+            Size = UDim2.new(0, 10, 0, 10); -- Р Р°Р·РјРµСЂ РєСЂСѓР¶РєР°
             ZIndex = 7;
             Parent = SliderInner;
         });
@@ -2752,7 +2765,7 @@ function Library:CreateWindow(...)
     if type(Config.Title) ~= 'string' then Config.Title = 'KAMIDERE' end
     if type(Config.MenuFadeTime) ~= 'number' then Config.MenuFadeTime = 0.2 end
     if typeof(Config.Position) ~= 'UDim2' then Config.Position = UDim2.fromOffset(175, 50) end
-    if typeof(Config.Size) ~= 'UDim2' then Config.Size = UDim2.fromOffset(740, 520) end -- в¬…пёЏ РЈР’Р•Р›РР§РР›Р РЁРР РРќРЈ Р”Рћ 740 (Р±С‹Р»Рѕ 650)
+    if typeof(Config.Size) ~= 'UDim2' then Config.Size = UDim2.fromOffset(740, 520) end -- в¬…пёЏ РЈР’Р•Р›РР§РР›Р РЁРР РРќРЈ Р”Рћ 740 (Р±С‹Р»Рѕ 650)
 
     if Config.Center then
         Config.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2782,7 +2795,7 @@ function Library:CreateWindow(...)
         Font = Library.Font,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Right,
-        TextColor3 = Color3.fromRGB(35, 35, 35), -- Р¦Р’Р•Рў РўР•РџР•Р Р¬ РўР•РњРќРћ-РЎР•Р Р«Р™ (РїРѕС‡С‚Рё СЃР»РёРІР°РµС‚СЃСЏ СЃ С„РѕРЅРѕРј)
+        TextColor3 = Color3.fromRGB(35, 35, 35), -- Р¦Р’Р•Рў РўР•РџР•Р Р¬ РўР•РњРќРћ-РЎР•Р Р«Р™ (РїРѕС‡С‚Рё СЃР»РёРІР°РµС‚СЃСЏ СЃ С„РѕРЅРѕРј)
         ZIndex = 3;
         Parent = Outer;
     });
@@ -3303,6 +3316,7 @@ function Tab:AddTabbox(Info)
     end
 
     Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
+        if Library.IsTyping and Library.IsTyping() then return end
         if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
             if Library.ToggleKeybind.Value ~= 'None'
                 and Input.UserInputType == Enum.UserInputType.Keyboard
