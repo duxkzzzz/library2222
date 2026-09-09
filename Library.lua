@@ -1318,7 +1318,7 @@ function Funcs:AddKeyPicker(Idx, Info)
     end;
     BaseAddons.__index = Funcs;
     BaseAddons.__namecall = function(Table, Key, ...)
-        return Funcs[Key](...);
+        return Funcs[Key](Table, ...);
     end;
 end;
 
@@ -2467,7 +2467,7 @@ function Funcs:AddDropdown(Idx, Info)
 
     BaseGroupbox.__index = Funcs;
     BaseGroupbox.__namecall = function(Table, Key, ...)
-        return Funcs[Key](...);
+        return Funcs[Key](Table, ...);
     end;
 end;
 
@@ -3238,9 +3238,10 @@ function Tab:AddTabbox(Info)
     local ModalElement = Library:Create('TextButton', {
         BackgroundTransparency = 1;
         Size = UDim2.new(0, 0, 0, 0);
-        Visible = true;
+        Visible = false;
         Text = '';
         Modal = false;
+        Active = false;
         Parent = ScreenGui;
     });
 
