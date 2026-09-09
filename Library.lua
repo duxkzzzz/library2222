@@ -124,21 +124,19 @@ function Library:SafeCallback(f, ...)
         return;
     end;
 
-    if not Library.NotifyOnError then
-        return f(...);
-    end;
-
     local success, event = pcall(f, ...);
 
     if not success then
-        local _, i = event:find(":%d+: ");
+        local eventStr = tostring(event);
+        local _, i = eventStr:find(":%d+: ");
 
         if not i then
-            return Library:Notify(event);
+            return Library:Notify(eventStr, 5);
         end;
 
-        return Library:Notify(event:sub(i + 1), 3);
+        return Library:Notify(eventStr:sub(i + 1), 5);
     end;
+    return event;
 end;
 
 function Library:AttemptSave()
